@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-typedef int (*qlic_response_callback)(char*, size_t, size_t, void*);
+typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
 
 typedef struct QlicString {
 	char* string;

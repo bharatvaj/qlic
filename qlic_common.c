@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <qlic_response_handler.h>
 
 void qlic_error(const char* error_message) {
 	fprintf(stderr, error_message);
@@ -13,8 +14,8 @@ static struct curl_slist* __qlic_set_request_headers(QlicContext* context, QlicS
 		return NULL;
 	}
 	struct curl_slist* list = NULL;
-#define __QLIC_AUTHORIZATION_HEADER "Authorization: "
-	// TODO cleanup authorization_header if curl doesn't handle it?
+#define __QLIC_AUTHORIZATION_HEADER "Authorization: Zoho-oauthtoken "
+	// TODO free up authorization_header if curl doesn't handle
 	size_t authorization_header_len = sizeof(__QLIC_AUTHORIZATION_HEADER) + access_token->len;
 	char* authorization_header = (char*)malloc(authorization_header_len);
 	strncpy(authorization_header, __QLIC_AUTHORIZATION_HEADER, sizeof(__QLIC_AUTHORIZATION_HEADER));
@@ -67,12 +68,15 @@ void qlic_request(QlicContext* context, qlic_response_callback callback, bool is
 		CURL* curl = (CURL*)context->context;
 		CURLcode res;
 		curl_easy_setopt(curl, CURLOPT_URL, context->request_url->string);
-		/* curl_easy_setopt(curl, CURLOPT_GET, 1); */
 		/* curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0); */
-		curl_easy_setopt(curl, CURLOPT_READFUNCTION, callback);
 		if (is_post_request) {
 			curl_easy_setopt(curl, CURLOPT_POST, 1);
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"text\": \"Hi\"}");
 		}
+		/* curl_easy_setopt(curl, CURLOPT_READFUNCTION, qlic_handle_read_chat); */
+		/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1); */
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, curl);
 		res = curl_easy_perform(curl);
 		if(res != CURLE_OK) {
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",

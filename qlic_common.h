@@ -6,7 +6,7 @@
 
 #define __QLIC_ASSIGN_STRING(X,Y) \
 	X->string = Y; \
-	X->len = sizeof(Y);
+	X->len = strlen(Y);
 
 void qlic_error(const char* error_message);
 
