@@ -5,8 +5,10 @@
 #include <qlic_response_handler.h>
 
 void qlic_error(const char* error_message) {
-	fprintf(stderr, error_message);
+	fprintf(stderr, "%s\n", error_message);
 }
+
+
 
 static struct curl_slist* __qlic_set_request_headers(QlicContext* context, QlicString* access_token) {
 	CURL* curl = (CURL*)context->context;
@@ -55,7 +57,7 @@ void destroy_qlic_string(QlicString* qlic_string) {
 QlicContext* qlic_init() {
 	CURL *curl = curl_easy_init();
 	if (curl) {
-		QlicContext* qlic_context = (QlicContext*)malloc(sizeof(QlicContext));
+		QlicContext* qlic_context = (QlicContext*)calloc(1, sizeof(QlicContext));
 		qlic_context->context = curl;
 		return qlic_context;
 	} else {

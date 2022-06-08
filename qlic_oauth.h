@@ -6,6 +6,9 @@
 #include <config.h>
 #include <nxjson.h>
 
+#include "qlic_types.h"
+#include "qlic_private.h"
+
 // TODO Choose between DB and text files for saving this information
 // If using text, choose between formats, yaml or json or other format, which is more suckless
 // If DB, sliqte3 is a good choice, but don't
@@ -35,8 +38,93 @@ char *json_access_code_transformer(char* str) {
 	return NULL;
 }
 
-char* start_oauth_server() {
-	oauth2_config* conf = oauth2_init(CLIQ_CLIENT_ID, CLIQ_CLIENT_SECRET);
+
+/*
+ * returns >1 if the file is sucessfully read
+ * returns the err value (<=0) in case of errors
+ * return -2 if dest is NULL
+ * returs -3 if dest_len is NULL
+ */
+uint8_t read_contents(char* dest, size_t* dest_len, FILE* fp) {
+	if (dest == NULL) {
+		return -2;
+	}
+	if (dest_len == NULL) {
+		return -3;
+	}
+	int err = -1;
+	size_t res = *dest_len;
+	while ((res = fread(dest, 1, QLIC_FILE_BUFFER_SIZE, fp)) > 0) {
+		*dest_len += res;
+		if (res == 0) {
+			if((err = ferror(fp)) != 0) {
+				// error occured
+				return err;
+			} else if((err = feof(fp)) != 0) {
+				// return okay
+				return err;
+			}
+			/// unknown error
+			return -1;
+		} else {
+			// res > QLIC_FILE_READ_SIZE
+			dest = realloc(dest, *dest_len + QLIC_FILE_BUFFER_SIZE);
+		}
+	}
+	return -1;
+}
+
+QlicErrorCode qlic_read_config_file(QlicContext* ctx) {
+	/// @todo use xdg paths
+	FILE* fp = fopen("config.json", "r");
+	char* dest = malloc(sizeof(char) * QLIC_FILE_BUFFER_SIZE);
+	size_t dest_len = QLIC_FILE_BUFFER_SIZE;
+	read_contents(dest, &dest_len, fp);
+	const nx_json* json = nx_json_parse(dest, nx_json_unicode_to_utf8);
+	if (json->type == NX_JSON_OBJECT) {
+		const nx_json* at_user = nx_json_get(json, "user_id");
+		if (at_user == NULL) return QLIC_ERROR;
+		if (at_user->type == NX_JSON_OBJECT) {
+			const nx_json* at_client_id = nx_json_get(at_user, "client_id");
+			if (at_client_id == NULL) return QLIC_ERROR;
+			if (at_client_id->type == NX_JSON_STRING) {
+				qlic_error(at_client_id->text_value);
+				/// @todo maybe nxjson already string length has it?
+				__QLIC_ASSIGN_STRING(ctx->client_id, at_client_id->text_value);
+				qlic_error(ctx->client_id->string);
+				if (at_client_id->text_value == NULL) {
+					return QLIC_ERROR;
+				}
+			}
+			const nx_json* at_client_secret = nx_json_get(at_user, "client_secret");
+			if (at_client_secret == NULL) return QLIC_ERROR;
+			if (at_client_secret->type == NX_JSON_STRING) {
+				qlic_error(at_client_secret->text_value);
+				/// @todo maybe nxjson already string length has it?
+				__QLIC_ASSIGN_STRING(ctx->client_secret, at_client_secret->text_value);
+				qlic_error(ctx->client_secret->string);
+				if (at_client_secret->text_value == NULL) {
+					return QLIC_ERROR;
+				}
+			}
+		}
+	}
+	return QLIC_ERROR;
+}
+
+char* start_oauth_server(QlicContext* ctx) {
+	int err = -1;
+	err = qlic_read_config_file(ctx);
+	if (err) {
+		qlic_error("Not able to read config file");
+		QLIC_PANIC();
+	}
+
+	oauth2_config* conf = oauth2_init(ctx->client_id->string, ctx->client_secret->string);
+	if (conf == NULL) {
+		qlic_error("conf is null\n");
+		QLIC_PANIC();
+	}
 	conf->access_auth_code_transformer = json_access_code_transformer;
     oauth2_set_redirect_uri(conf, CLIQ_REDIRECT_URI);
 	// TODO generate true state instead of LOL

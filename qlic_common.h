@@ -4,10 +4,6 @@
 #include <qlic_types.h>
 #include <stdbool.h>
 
-#define __QLIC_ASSIGN_STRING(X,Y) \
-	X->string = Y; \
-	X->len = strlen(Y);
-
 void qlic_error(const char* error_message);
 
 QlicString* init_qlic_string();

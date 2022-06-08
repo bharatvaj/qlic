@@ -5,6 +5,8 @@
 #include <cliq_apis.h>
 #include <qlic_response_handler.h>
 #include <qlic_oauth.h>
+#include <qlic_private.h>
+#include "config.h"
 
 int qlic_send_text_msg(const char* __access_token, const char* __chat_id) {
 	QlicString* access_token = NULL;
@@ -24,23 +26,32 @@ int qlic_send_text_msg(const char* __access_token, const char* __chat_id) {
 	return 0;
 }
 
+static void qlic_usage() {
+	fputs("usage: qlic [-va] [-r chat_id]\n", stderr);
+	exit(1);
+}
+
 // TODO Send error back
 int main(int argc, char* argv[]) {
-	if (argc == 1) {
-		qlic_error("Not enough arguments");
-		return -1;
-	}
-	// TODO Use an argument parsing library
-	if (strcmp(argv[1], "-r") == 0) {
-		// TODO read access_token from state.json
-		char* access_token = "1000.429cf5132d6cc978960bfdd6e0a425cc.80bbd5584b0c35133c4f82143e6811b2";
-		// FIXME possible buffer overflow here
-		qlic_send_text_msg(access_token, argv[2]);
-	} else if (strcmp(argv[1], "-a") == 0) {
-		char* access_token = start_oauth_server();
-		if (access_token == NULL) {
-			qlic_error("Access token is empty, authentication failed");
-			return -1;
+	int i;
+	QlicContext* ctx = qlic_init();
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-v")) {
+			fputs("qlic"QLIC_VERSION"\n", stderr);
+		} else if (!strcmp(argv[i], "-a")) {
+			char* access_token = start_oauth_server(ctx);
+			if (access_token == NULL) {
+				qlic_error("Access token is empty, authentication failed");
+				return -1;
+			}
+		/* these options take one argument */
+		} else if (!strcmp(argv[i], "-r")) {
+			// TODO read access_token from state.json
+			char* access_token = "1000.429cf5132d6cc978960bfdd6e0a425cc.80bbd5584b0c35133c4f82143e6811b2";
+			// FIXME possible buffer overflow here
+			qlic_send_text_msg(access_token, argv[++i]);
+		} else {
+			qlic_usage();
 		}
 	}
 	return 0;

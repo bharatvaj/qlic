@@ -1,7 +1,7 @@
 qlic
 ====
 
-qlic is a cli frontend to the venereal Zoho cliq. It is cliq but unopinionated.
+qlic is an unecessary fast cli frontend to the venereal Zoho cliq. It is cliq but unopinionated.
 
 NOTE: Built with bubble gum and paper clip. Highly unstable, please use at your own risk.
 
@@ -46,6 +46,12 @@ git clone https://github.com/bharatvaj/qlic
 cd qlic
 make install
 ```
+
+Dependencies
+------------
+* libcurl
+* bharatvaj/OAuth2
+* yarosla/nxjson
 
 Setup
 -----
