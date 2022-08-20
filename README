@@ -1,0 +1,30 @@
+libqstr
+=======
+libqstr is a simple string library that is based heavily on the SDS(Simple dynamic String) library with focus on simplicity and portability.
+
+The whole layout in memory of a string created with libqstr looks like this
+	--------------------------
+	|STRSIZE|...C-STRING...|0|
+	--------------------------
+
+Usage
+-----
+`qstr` is the string type provided by this library which should be used to call all the qstr* APIs. `qstr` is a simple typedef to `char*`
+
+All the APIs are documented in qstr.h. Usage examples can be found in test.c.
+
+Installation
+------------
+Edit config.mk to match your local setup (qstr is installed into
+the /usr/local namespace by default).
+
+Afterwards enter the following command to build and install libqstr (if
+necessary as root):
+
+    make clean install
+
+Comparison with SDS
+-------------------
+* libqstr uses size_t as the metadata for the string instead of a header struct.
+* sds's API is not very consistent. The functions names are a mix between c style function names and camelcase. libqstr follows the std library's naming conventions for it's functions with qstr* prepended.
+
