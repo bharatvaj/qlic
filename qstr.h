@@ -42,7 +42,13 @@ qstr qstrmalloc(size_t strsiz);
 /**
  * This creates a new memory of size `n`, where the `str` will be copied into.
  */
-qstr qstrnew(const char* str, size_t n);
+qstr qstrnnew(const char* str, size_t n);
+
+/**
+ * This creates a new memory of size strlen(str) if str is not NULL,
+ * returns NULL is str is NULL.
+ */
+qstr qstrnew(const char* str);
 
 /**
  * Grows the `str`'s capacity to `newsize` using the function defined in QSTR_REALLOCATOR.

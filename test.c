@@ -11,11 +11,12 @@
 const char* teststr = QSTR_TEST_STRING;
 qstr large = NULL;
 
-#define debug(...) \
-	fprintf(stderr, __VA_ARGS__);
+int enable_debug = 0;
 
-/* #define debug(...) \ */
-/* 	// no-op */
+#define debug(...) \
+	if (enable_debug) { \
+		fprintf(stderr, __VA_ARGS__); \
+	}
 
 void debug_snprintf() {
 	qstr newstr = qstrsprintf("This library is %s", "awesome");
@@ -66,7 +67,7 @@ int find_test(int forward) {
 
 int strlen_test() {
 	size_t teststr_len = strlen(teststr);
-	qstr sstr = qstrnew(teststr, teststr_len);
+	qstr sstr = qstrnnew(teststr, teststr_len);
 	qstr copystr = qstrdup(sstr);
 	// strlen comparisons
 	// All should return the same values as strlen(char*)
@@ -106,7 +107,11 @@ int main(int argc, char* argv[]) {
 		res = all_test();
 	} else {
 		for(int i = 1; i < argc; i++) {
-			if (strcmp(argv[i], "length") == 0) {
+			if (strcmp(argv[i], "debug") == 0) {
+				enable_debug = 1;
+			} else if(strcmp(argv[i], "all") == 0) {
+				res = all_test();
+			} else if(strcmp(argv[i], "length") == 0) {
 				res = res && strlen_test();
 			} else if (strcmp(argv[i], "grow") == 0) {
 				res = res && grow_buffer_test();

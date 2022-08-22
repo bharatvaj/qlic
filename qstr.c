@@ -56,12 +56,20 @@ qstr qstrmalloc(size_t n) {
 	return (qstr)(hdr + 1);
 }
 
-qstr qstrnew(const char* str, size_t n) {
+qstr qstrnnew(const char* str, size_t n) {
 	qstrhdr* hdr = qstrnewalloc(&n);
 	*hdr = n;
 	char* destptr = (qstr)(hdr + 1);
 	memcpy(destptr, str, n + 1);
 	return destptr;
+}
+
+qstr qstrnew(const char* str) {
+	if (str == NULL) {
+		return NULL;
+	}
+	size_t n = strlen(str);
+	return qstrnnew(str, n);
 }
 
 qstr qstrrealloc(const qstr str, size_t newsize) {
