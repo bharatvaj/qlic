@@ -1,13 +1,18 @@
 HACKING
 =======
 
-qlic is written using c. It works with c99 compilers.
+STYLE
+-----
+Written in C99.
+PascalCase for structs.
+snake_case for variables.
 
 FILES
 -----
 * qlic.c - Controller for qlic, handles argument parsing and delegates control to others parts of the code
 
-* qlic_types.h - Contains the basic types required for cliq. (struct QlicString, etc)
-* cliq_api.h - Contains convenience functions for calling the cliq APIs
-* qlic_common.h - Contains utils and other common function for qlic
+* qtypes.h - Contains the basic types required for cliq. (struct QlicContext, etc)
+* qcommon.h - Contains utils and other common function for qlic
 * qlic_response_handler.h - Handles the responses and delegate the control based on the response
+
+* cliq_api.h - Contains convenience functions for calling the cliq APIs

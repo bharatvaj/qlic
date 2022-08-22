@@ -2,16 +2,12 @@
 #define __QLIC_TYPES_H
 
 #include <stddef.h>
+#include <qstr.h>
 
-typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
-
-typedef struct QlicString {
-	char* string;
-	size_t len;
-} QlicString;
+typedef size_t (*qlic_response_callback)(qstr, size_t, size_t, void*);
 
 struct QlicCliqAction {
-	char* request_url;
+	qstr request_url;
 	size_t request_url_len;
 	qlic_response_callback callback;
 };
@@ -21,7 +17,7 @@ struct QlicCliqAction {
  */
 typedef struct QlicContext {
 	void* context;
-	QlicString* request_url;
+	qstr request_url;
 } QlicContext;
 
 #endif
