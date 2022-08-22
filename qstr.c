@@ -91,6 +91,9 @@ qstr qstrrealloc(const qstr str, size_t newsize) {
 }
 
 void qstrfree(qstr str) {
+	if (str == NULL) {
+		return;
+	}
 	qstrhdr* hdr = qstrtoqstrhdr(str);
 	__qstr_dealloc(hdr);
 }
@@ -178,7 +181,7 @@ qstr qstrcat(const qstr str1, const qstr str2) {
 	return cqstr;
 }
 
-size_t qstrsprintf(qstr* dest, const char* format, ...) {
+int qstrsprintf(qstr* dest, const char* format, ...) {
 	if (dest == NULL) {
 		return 0;
 	}
@@ -186,16 +189,14 @@ size_t qstrsprintf(qstr* dest, const char* format, ...) {
 	va_start(ap, format);
 	// TODO check if this works everywhere
 	int n = vsnprintf(NULL, 0, format, ap);
-	*dest = qstrrealloc(*dest, n);
 	va_end(ap);
 	va_start(ap, format);
-	int m = vsnprintf(*dest, n + 1, format, ap);
-	// update size in header
-	qstrhdr* desthdr = qstrtoqstrhdr(*dest);
-	*desthdr = m;
+	qstr newmem = qstrmalloc(n);
+	int m = vsnprintf(newmem, n + 1, format, ap);
 	va_end(ap);
-	// TODO check if m == n
-	// TODO check the validity of ptr
-	// TODO add error handling mechanism
-	return m;
+	if (*dest != NULL) {
+		qstrfree(*dest);
+	}
+	*dest = newmem;
+	return m == n;
 }

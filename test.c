@@ -21,9 +21,27 @@ int enable_debug = 0;
 int sprintf_test() {
 	qstr newstr = NULL;
 #define QSTR_SAMPLE_STR "This library is awesome"
-	int n = qstrsprintf(&newstr, "This library is %s", "awesome");
-	debug("%s\n", newstr);
-	return (n == sizeof(QSTR_SAMPLE_STR) - 1);
+	size_t n = sizeof(QSTR_SAMPLE_STR) - 1;
+	int m = qstrsprintf(&newstr, "This library is %s", "awesome");
+	debug("Expected: %s\n", QSTR_SAMPLE_STR);
+	debug("Actual: %s\n", newstr);
+	debug("Expected Size: %ld\n", n);
+	debug("Actual Size: %ld\n", qstrlen(newstr));
+	debug("Return value: %d\n", m);
+	return (n == qstrlen(newstr));
+}
+
+int sprintf_self_test() {
+	qstr newstr = qstrnew("mac is UNIX");
+#define QSTR_SELF_SAMPLE_STR "GNU is not UNIX but mac is UNIX"
+	size_t n = sizeof(QSTR_SELF_SAMPLE_STR) - 1;
+	int m = qstrsprintf(&newstr, "GNU is not UNIX but %s", newstr);
+	debug("Expected: %s\n", QSTR_SELF_SAMPLE_STR);
+	debug("Actual: %s\n", newstr);
+	debug("Expected Size: %ld\n", n);
+	debug("Actual Size: %ld\n", qstrlen(newstr));
+	debug("Return value: %d\n", m);
+	return (n == qstrlen(newstr));
 }
 
 qstr grow_buffer_example() {
@@ -101,7 +119,8 @@ int all_test() {
 	RUN_TEST(3, find_test(1), "find")
 	RUN_TEST(4, find_test(0), "findrev")
 	RUN_TEST(5, sprintf_test(), "sprintf")
-	return t1 && t2 && t3 && t4 & t5;
+	RUN_TEST(6, sprintf_self_test(), "sprintf_self")
+	return t1 && t2 && t3 && t4 && t5 && t6;
 }
 
 
@@ -122,6 +141,8 @@ int main(int argc, char* argv[]) {
 				res = res && grow_buffer_test();
 			} else if (strcmp(argv[i], "sprintf") == 0) {
 				res = res && sprintf_test();
+			} else if (strcmp(argv[i], "sprintf_self") == 0) {
+				res = res && sprintf_self_test();
 			} else if (strcmp(argv[i], "find") == 0) {
 				if (large == NULL) {
 					large = grow_buffer_example();

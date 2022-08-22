@@ -108,12 +108,12 @@ int qstrcmp(const qstr s1, const qstr s2);
 qstr qstrcat(const qstr str1, const qstr str2);
 
 /**
- * Fills dest with the output of snprintf(`format`, ...).
- * if `dest` is already allocated, size is resized to match the output size.
- * Returns the number of characters filled inside dest
+ * New memory is allocated and used to be filled with the output of snprintf(`format`, ...).
+ * if `*dest` is already allocated, it is freed up after formatting the string.
+ * Returns whether the operation was successful or not.
  * WARNING: Current implementation takes O(n*2)
  */
-size_t qstrsprintf(qstr* dest, const char* format, ...);
+int qstrsprintf(qstr* dest, const char* format, ...);
 
 #ifdef __cplusplus
 }
