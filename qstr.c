@@ -38,6 +38,14 @@ static inline qstrhdr* qstrtoqstrhdr(const qstr str) {
 }
 
 /**
+ * We get qstr when we add `1` with qsthdr
+ * as the memory is continguous.
+ */
+static inline qstr qstrhdrtoqstr(const qstrhdr* hdr) {
+	return (qstr) (hdr + 1);
+}
+
+/**
  * Contructs a new qstrhdr with size `n`.
  * TODO check if '*' is necessary when using inline funcs,
  * to prevent copies
@@ -53,13 +61,13 @@ static inline qstrhdr* qstrnewalloc(size_t* n) {
 qstr qstrmalloc(size_t n) {
 	qstrhdr* hdr = qstrnewalloc(&n);
 	*hdr = n;
-	return (qstr)(hdr + 1);
+	return qstrhdrtoqstr(hdr);
 }
 
 qstr qstrnnew(const char* str, size_t n) {
 	qstrhdr* hdr = qstrnewalloc(&n);
 	*hdr = n;
-	char* destptr = (qstr)(hdr + 1);
+	char* destptr = qstrhdrtoqstr(hdr);
 	memcpy(destptr, str, n + 1);
 	return destptr;
 }
@@ -73,10 +81,13 @@ qstr qstrnew(const char* str) {
 }
 
 qstr qstrrealloc(const qstr str, size_t newsize) {
-	qstrhdr* hdr = qstrtoqstrhdr(str);
+	qstrhdr* hdr = NULL;
+	if (str != NULL) {
+		hdr = qstrtoqstrhdr(str);
+	}
 	hdr = (qstrhdr*)__qstr_reallocator(hdr, sizeof(qstrhdr) + newsize + 1);
 	*hdr = newsize;
-	return (char*)(hdr + 1);
+	return qstrhdrtoqstr(hdr);
 }
 
 void qstrfree(qstr str) {
@@ -89,7 +100,7 @@ qstr qstrdup(const qstr oldstr) {
 	size_t newsize = sizeof(qstrhdr) + *oldhdr + 1;
 	qstrhdr* newhdr = __qstr_allocator(newsize);
 	__qstr_memcpy(newhdr, oldhdr, newsize);
-	return (qstr)(newhdr + 1);
+	return qstrhdrtoqstr(newhdr);
 }
 
 int qstrcpy(qstr dest, const qstr src) {
@@ -167,19 +178,24 @@ qstr qstrcat(const qstr str1, const qstr str2) {
 	return cqstr;
 }
 
-qstr qstrsprintf(const char* format, ...) {
+size_t qstrsprintf(qstr* dest, const char* format, ...) {
+	if (dest == NULL) {
+		return 0;
+	}
 	va_list ap;
 	va_start(ap, format);
 	// TODO check if this works everywhere
 	int n = vsnprintf(NULL, 0, format, ap);
-	qstr ptr = qstrmalloc(n);
+	*dest = qstrrealloc(*dest, n);
 	va_end(ap);
 	va_start(ap, format);
-	// int m =
-	vsnprintf(ptr, n + 1, format, ap);
+	int m = vsnprintf(*dest, n + 1, format, ap);
+	// update size in header
+	qstrhdr* desthdr = qstrtoqstrhdr(*dest);
+	*desthdr = m;
 	va_end(ap);
 	// TODO check if m == n
 	// TODO check the validity of ptr
 	// TODO add error handling mechanism
-	return ptr;
+	return m;
 }

@@ -18,9 +18,12 @@ int enable_debug = 0;
 		fprintf(stderr, __VA_ARGS__); \
 	}
 
-void debug_snprintf() {
-	qstr newstr = qstrsprintf("This library is %s", "awesome");
+int sprintf_test() {
+	qstr newstr = NULL;
+#define QSTR_SAMPLE_STR "This library is awesome"
+	int n = qstrsprintf(&newstr, "This library is %s", "awesome");
 	debug("%s\n", newstr);
+	return (n == sizeof(QSTR_SAMPLE_STR) - 1);
 }
 
 qstr grow_buffer_example() {
@@ -97,8 +100,10 @@ int all_test() {
 	RUN_TEST(2, grow_buffer_test(), "grow")
 	RUN_TEST(3, find_test(1), "find")
 	RUN_TEST(4, find_test(0), "findrev")
-	return t1 && t2 && t3 && t4;
+	RUN_TEST(5, sprintf_test(), "sprintf")
+	return t1 && t2 && t3 && t4 & t5;
 }
+
 
 int main(int argc, char* argv[]) {
 	int res = 1;
@@ -115,6 +120,8 @@ int main(int argc, char* argv[]) {
 				res = res && strlen_test();
 			} else if (strcmp(argv[i], "grow") == 0) {
 				res = res && grow_buffer_test();
+			} else if (strcmp(argv[i], "sprintf") == 0) {
+				res = res && sprintf_test();
 			} else if (strcmp(argv[i], "find") == 0) {
 				if (large == NULL) {
 					large = grow_buffer_example();
