@@ -35,8 +35,8 @@ char *json_access_code_transformer(char* str) {
 	return NULL;
 }
 
-char* start_oauth_server() {
-	oauth2_config* conf = oauth2_init(CLIQ_CLIENT_ID, CLIQ_CLIENT_SECRET);
+char* start_oauth_server(qstr client_id, qstr client_token) {
+	oauth2_config* conf = oauth2_init(client_id, client_token);
 	conf->access_auth_code_transformer = json_access_code_transformer;
     oauth2_set_redirect_uri(conf, CLIQ_REDIRECT_URI);
 	// TODO generate true state instead of LOL

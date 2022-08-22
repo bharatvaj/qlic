@@ -18,7 +18,7 @@ static struct curl_slist* __qlic_set_request_headers(QlicContext* context, qstr 
 #define __QLIC_AUTHORIZATION_HEADER "Authorization: Zoho-oauthtoken "
 	// TODO free up authorization_header if curl doesn't handle
 	// TODO check if we instance from qstr lib itself
-	qstr authorization_header = qstrnew(__QLIC_AUTHORIZATION_HEADER, sizeof(__QLIC_AUTHORIZATION_HEADER) - 1);
+	qstr authorization_header = qstrnew(__QLIC_AUTHORIZATION_HEADER);
 	authorization_header = qstrcat(authorization_header, access_token);
 	list = curl_slist_append(list, authorization_header);
 	list = curl_slist_append(list, "Content-Type: application/json");

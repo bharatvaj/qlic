@@ -6,6 +6,18 @@
 
 typedef size_t (*qlic_response_callback)(qstr, size_t, size_t, void*);
 
+// data structure of json
+typedef struct {
+	qstr access_token;
+	qstr refresh_token;
+	qstr grant_token;
+} QlicState;
+
+typedef struct {
+	qstr client_id;
+	qstr client_secret;
+} QlicConfig;
+
 struct QlicCliqAction {
 	qstr request_url;
 	size_t request_url_len;

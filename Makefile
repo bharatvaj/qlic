@@ -7,7 +7,7 @@ OBJ = ${SRC:.c=.o}
 %.o: %.c
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) -c $<
 
-qlic: config.h $(OBJ)
+qlic: config.h $(OBJ) qlic.c
 	$(CC) -o $@ $(CFLAGS)  qlic.c $(OBJ) $(LDFLAGS)
 
 config.h: config.def.h

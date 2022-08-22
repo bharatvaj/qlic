@@ -1,10 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <qcommon.h>
 #include <capis.h>
 #include <qresponder.h>
 #include <qoauth.h>
+#include <nxjson.h>
+#include <config.h>
+
+static size_t debug(const char* format, ...) {
+	va_list va;
+	va_start(va, format);
+	size_t ret_val = vfprintf(stderr, format, va);
+	va_end(va);
+	return ret_val;
+}
+
+static size_t inform(const char* format, ...) {
+	va_list va;
+	va_start(va, format);
+	size_t ret_val = vfprintf(stdout, format, va);
+	va_end(va);
+	return ret_val;
+}
+
+const nx_json* state_json = NULL;
+const nx_json* config_json = NULL;
 
 int qlic_send_text_msg(const qstr access_token, const qstr chat_id) {
 	QlicContext* qlic_context = qlic_context_access_init(access_token);
@@ -17,23 +39,125 @@ int qlic_send_text_msg(const qstr access_token, const qstr chat_id) {
 	return 0;
 }
 
-// TODO Send error back
+qstr read_file(FILE* fp) {
+    /**
+	 * Returns a buffer filled with contents from fp
+	 * Works only for files upto 1GB
+	 */
+	const size_t buf_size = 64;
+	qstr buffer = qstrmalloc(buf_size);
+	size_t total_bytes_read = 0;
+	size_t cbr = 0;
+	while((cbr = fread(buffer + total_bytes_read, 1, buf_size, fp)) > 0) {
+		if (cbr > 0) {
+			total_bytes_read += cbr;
+			size_t newsize = total_bytes_read + buf_size;
+			/* debug("buffer: %p, newsize: %ld, ", buffer, newsize); */
+			buffer = qstrrealloc(buffer, newsize);
+			/* debug("buffer after qstrrealloc: %p\n", buffer); */
+		} else {
+			// cbr is -1 or 0 when error occurs or during eof
+			break;
+		}
+	}
+	return buffer;
+}
+
+qstr get_file(int filetype) {
+	FILE* fp = NULL;
+	qstr path_val = qstrnew(getenv(qlic_env_vars[filetype]));
+	if (path_val == NULL) {
+		path_val = qstrnew(qlic_env_default_vars[filetype]);
+		/* append home path
+		 * TODO check if this is alright */
+		qstr home_path = qstrnew(getenv("HOME"));
+		if (home_path != NULL) {
+			/* qstr merged_val = qstrmalloc(4); */
+			// TODO qstrprint!!!
+			// handle string memory if the args have one of the qstr strings
+			qstrsprintf(&path_val, "%s/%s", home_path, path_val);
+			/* qstrfree(path_val); */
+			/* path_val = merged_val; */
+		}
+	}
+	debug("%s file: %s\n", qlic_file_types[filetype], path_val);
+	fp = fopen(path_val, qlic_file_flags[filetype]);
+	if (fp == NULL) {
+			inform("Not able to open %s\n", path_val);
+			return NULL;
+	}
+	qstr file_contents = read_file(fp);
+	fclose(fp);
+	return file_contents;
+}
+
+const nx_json* get_json(int filetype) {
+	qstr jsonstr = get_file(filetype);
+	if (jsonstr == NULL) {
+		return NULL;
+	}
+	/* printf("File contents: %s\n", jsonstr); */
+	const nx_json* json = nx_json_parse(jsonstr, nx_json_unicode_to_utf8);
+	return json;
+}
+
+#define LOAD_INTO_STRUCT(DEST, FIELD, JSON) \
+	const nx_json* FIELD = nx_json_get(json_rep, #FIELD); \
+	if (FIELD->type == NX_JSON_STRING) { \
+		DEST.FIELD = qstrnew(FIELD->text_value); \
+		fprintf(stderr, "%s: %s\n", #FIELD, DEST.FIELD); \
+	}
+
+void load_state(const nx_json* json_rep) {
+	if (json_rep->type == NX_JSON_OBJECT) {
+		LOAD_INTO_STRUCT(qlic_state, access_token, json_rep)
+		LOAD_INTO_STRUCT(qlic_state, grant_token, json_rep)
+	}
+}
+
+void load_config(const nx_json* json_rep) {
+	if (json_rep->type == NX_JSON_OBJECT) {
+		LOAD_INTO_STRUCT(qlic_config, client_id, json_rep)
+		LOAD_INTO_STRUCT(qlic_config, client_secret, json_rep)
+	}
+}
+
+// TODO Send error back with proper documentation
 int main(int argc, char* argv[]) {
 	if (argc == 1) {
 		qlic_error("Not enough arguments");
 		return -1;
 	}
-	// TODO Use an argument parsing library
-	if (strcmp(argv[1], "-r") == 0) {
-		// TODO read access_token from state.json
-		qstr access_token = qstrnew("1000.11a210512a0aed97a3d4c5a14848d70b.3383057c623f1b59493ab0d8c336eede", sizeof("1000.11a210512a0aed97a3d4c5a14848d70b.3383057c623f1b59493ab0d8c336eede") - 1);
-		// FIXME possible buffer overflow here
-		qlic_send_text_msg(access_token, argv[2]);
+
+	state_json = get_json(STATE_FILE);
+	config_json = get_json(CONFIG_FILE);
+	if (state_json == NULL) {
+		inform("Cannot parse state.json\n");
+		return -1;
+	}
+	if (config_json != NULL) {
+	// TODO if config is found load the global states from the json
+	}
+
+	load_state(state_json);
+	load_config(config_json);
+	debug("access_token: %s\n", qlic_state.access_token);
+	if (qlic_state.access_token == NULL) {
+		inform("Access token not found, try auth again\n");
+		exit(-1);
+	}
+	// TODO Use an argument parsing library or not, make a decision
+	if (strcmp(argv[1], "-s") == 0) {
+		if (argc > 2) {
+			qlic_send_text_msg(qlic_state.access_token, argv[2]);
+		}
 	} else if (strcmp(argv[1], "-a") == 0) {
-		char* access_token = start_oauth_server();
+		char* access_token = start_oauth_server(qlic_config.client_id, qlic_config.client_secret);
 		if (access_token == NULL) {
 			qlic_error("Access token is empty, authentication failed");
 			return -1;
+		} else {
+			// TOOD write data to state.json
 		}
 	}
 	return 0;
