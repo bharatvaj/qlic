@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <qstr.h>
 
-typedef size_t (*qlic_response_callback)(qstr, size_t, size_t, void*);
+typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
 
 // data structure of json
 typedef struct {
@@ -18,16 +18,23 @@ typedef struct {
 	qstr client_secret;
 } QlicConfig;
 
+
+typedef enum QlicErrorCode {
+	QLIC_ERROR = 0,
+	QLIC_OK
+} QlicErrorCode;
+
 struct QlicCliqAction {
-	qstr request_url;
+	char* request_url;
 	size_t request_url_len;
 	qlic_response_callback callback;
 };
 
 /**
- * Network related information
+ * Holds network information for the current request
  */
 typedef struct QlicContext {
+	/* cURL ctx  */
 	void* context;
 	qstr request_url;
 } QlicContext;

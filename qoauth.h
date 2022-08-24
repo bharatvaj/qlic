@@ -4,7 +4,11 @@
 #include <oauth2.h>
 #include <stdio.h>
 #include <config.h>
+#include <string.h>
+#include <stdlib.h>
 #include <nxjson.h>
+
+#include <qtypes.h>
 
 // TODO Choose between DB and text files for saving this information
 // If using text, choose between formats, yaml or json or other format, which is more suckless
@@ -35,8 +39,14 @@ char *json_access_code_transformer(char* str) {
 	return NULL;
 }
 
-char* start_oauth_server(qstr client_id, qstr client_token) {
-	oauth2_config* conf = oauth2_init(client_id, client_token);
+char* start_oauth_server() {
+	/* int err = -1; */
+
+	oauth2_config* conf = oauth2_init(qlic_config.client_id, qlic_config.client_secret);
+	if (conf == NULL) {
+		qlic_error("conf is null\n");
+		QLIC_PANIC();
+	}
 	conf->access_auth_code_transformer = json_access_code_transformer;
     oauth2_set_redirect_uri(conf, CLIQ_REDIRECT_URI);
 	// TODO generate true state instead of LOL

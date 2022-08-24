@@ -6,7 +6,7 @@
 #include <qstr.h>
 
 void qlic_error(const char* error_message) {
-	fprintf(stderr, error_message);
+	fprintf(stderr, "%s\n", error_message);
 }
 
 static struct curl_slist* __qlic_set_request_headers(QlicContext* context, qstr access_token) {
@@ -42,7 +42,7 @@ QlicContext* qlic_context_access_init(qstr access_token) {
 QlicContext* qlic_init() {
 	CURL *curl = curl_easy_init();
 	if (curl) {
-		QlicContext* qlic_context = (QlicContext*)malloc(sizeof(QlicContext));
+		QlicContext* qlic_context = (QlicContext*)calloc(1, sizeof(QlicContext));
 		qlic_context->context = curl;
 		return qlic_context;
 	} else {
