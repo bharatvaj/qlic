@@ -1,5 +1,5 @@
 # qlic version
-VERSION=2
+VERSION=0.2.0
 
 # Customize below to fit your system
 CFLAGS=-I. -I${HOME}/sysroot/include -g -Wall -Wextra -Werror -DQLIC_VERSION=\"${VERSION}\"

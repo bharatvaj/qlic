@@ -1,35 +1,21 @@
-#include "config.h"
-#include <capis.h>
-#include <nxjson.h>
-#include <qcommon.h>
-#include <qoauth.h>
-#include <qresponder.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static size_t debug(const char *format, ...) {
-  va_list va;
-  va_start(va, format);
-  size_t ret_val = vfprintf(stderr, format, va);
-  va_end(va);
-  return ret_val;
-}
+#include <nxjson.h>
+#include <qcommon.h>
+#include <qoauth.h>
+#include <qresponder.h>
+#include <capis.h>
 
-static size_t inform(const char *format, ...) {
-  va_list va;
-  va_start(va, format);
-  size_t ret_val = vfprintf(stdout, format, va);
-  va_end(va);
-  return ret_val;
-}
+#include "config.h"
 
 const nx_json *state_json = NULL;
 const nx_json *config_json = NULL;
 
 static void qlic_usage() {
-  fputs("usage: qlic [-va] [-r chat_id]\n", stderr);
+  fputs("usage: qlic [-va] [-r chat_id] [-s chat_id]\n", stderr);
   exit(1);
 }
 
@@ -57,9 +43,9 @@ qstr read_file(FILE *fp) {
     if (cbr > 0) {
       total_bytes_read += cbr;
       size_t newsize = total_bytes_read + buf_size;
-      /* debug("buffer: %p, newsize: %ld, ", buffer, newsize); */
+      debug("buffer: %p, newsize: %ld, ", buffer, newsize);
       buffer = qstrrealloc(buffer, newsize);
-      /* debug("buffer after qstrrealloc: %p\n", buffer); */
+      debug("buffer after qstrrealloc: %p\n", buffer);
     } else {
       // cbr is -1 or 0 when error occurs or during eof
       break;
@@ -73,16 +59,11 @@ qstr get_file(int filetype) {
   qstr path_val = qstrnew(getenv(qlic_env_vars[filetype]));
   if (path_val == NULL) {
     path_val = qstrnew(qlic_env_default_vars[filetype]);
-    /* append home path
-     * TODO check if this is alright */
+    /* TODO check if this is alright */
+    /* append home path */
     qstr home_path = qstrnew(getenv("HOME"));
     if (home_path != NULL) {
-      /* qstr merged_val = qstrmalloc(4); */
-      // TODO qstrprint!!!
-      // handle string memory if the args have one of the qstr strings
       qstrsprintf(&path_val, "%s/%s", home_path, path_val);
-      /* qstrfree(path_val); */
-      /* path_val = merged_val; */
     }
   }
   debug("%s file: %s\n", qlic_file_types[filetype], path_val);
@@ -93,6 +74,7 @@ qstr get_file(int filetype) {
   }
   qstr file_contents = read_file(fp);
   fclose(fp);
+  /* qstrfree(path_val); */
   return file_contents;
 }
 
@@ -110,7 +92,7 @@ const nx_json *get_json(int filetype) {
   const nx_json *FIELD = nx_json_get(json_rep, #FIELD);                        \
   if (FIELD->type == NX_JSON_STRING) {                                         \
     DEST.FIELD = qstrnew(FIELD->text_value);                                   \
-    fprintf(stderr, "%s: %s\n", #FIELD, DEST.FIELD);                           \
+    debug("%s: %s\n", #FIELD, DEST.FIELD);                           \
   }
 
 void load_state(const nx_json *json_rep) {
@@ -127,10 +109,9 @@ void load_config(const nx_json *json_rep) {
   }
 }
 
-// TODO Send error back with proper documentation
 int main(int argc, char *argv[]) {
   if (argc == 1) {
-    qlic_error("Not enough arguments");
+	qlic_usage();
     return -1;
   }
 
@@ -154,16 +135,28 @@ int main(int argc, char *argv[]) {
   }
   // TODO Use an argument parsing library or not, make a decision
   for (int i = 1; i < argc; i++) {
-    if (!strcmp(argv[i], "-v") == 0) {
-      fputs("qlic" QLIC_VERSION "\n", stderr);
-    } else if (strcmp(argv[i], "-s") == 0) {
-      if (argc > 2) {
-        qlic_send_text_msg(qlic_state.access_token, argv[2]);
-      }
-    } else if (strcmp(argv[1], "-a") == 0) {
-      char *access_token =
-          start_oauth_server(ctx);
-      /* char* access_token = start_oauth_server(ctx); */
+    if (!strcmp(argv[i], "-v")) {
+      fputs("qlic v" QLIC_VERSION "\n", stderr);
+    } else if (!strcmp(argv[i], "-d")) {
+		enable_debug = 1;
+	} else if (!strcmp(argv[i], "-r")) {
+		  /* ++i as we are going to consume next string  */
+      if (++i < argc) {
+        qlic_send_text_msg(qlic_state.access_token, argv[i]);
+      } else {
+		  // print usage and exit
+		  /* qlic_usage(); */
+	  }
+	} else if (!strcmp(argv[i], "-s")) {
+		  /* ++i as we are going to consume next string  */
+      if (++i < argc) {
+        qlic_send_text_msg(qlic_state.access_token, argv[i]);
+      } else {
+		  // print usage and exit
+		  /* qlic_usage(); */
+	  }
+    } else if (!strcmp(argv[1], "-a")) {
+      char *access_token = start_oauth_server(ctx);
       if (access_token == NULL) {
         qlic_error("Access token is empty, authentication failed");
         return -1;
