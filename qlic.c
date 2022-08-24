@@ -114,6 +114,11 @@ int main(int argc, char *argv[]) {
 	qlic_usage();
     return -1;
   }
+  int i = 1;
+  if (!strcmp(argv[i], "-d")) {
+	  	i++;
+		enable_debug = 1;
+  }
 
   QlicContext *ctx = qlic_init();
   state_json = get_json(STATE_FILE);
@@ -134,7 +139,7 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
   // TODO Use an argument parsing library or not, make a decision
-  for (int i = 1; i < argc; i++) {
+  for (; i < argc; i++) {
     if (!strcmp(argv[i], "-v")) {
       fputs("qlic v" QLIC_VERSION "\n", stderr);
     } else if (!strcmp(argv[i], "-d")) {
