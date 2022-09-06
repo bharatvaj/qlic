@@ -8,9 +8,13 @@ typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
 
 // data structure of json
 typedef struct {
+	/* server data */
+	qstr grant_token;
 	qstr access_token;
 	qstr refresh_token;
-	qstr grant_token;
+	qstr expires_in;
+	/* client data */
+	qstr time_generated;
 } QlicState;
 
 typedef struct {

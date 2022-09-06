@@ -3,10 +3,6 @@
 
 #include <qtypes.h>
 
-/* Mutable global values */
-QlicState qlic_state;
-QlicConfig qlic_config;
-
 /* Constants */
 const int CONFIG_FILE = 0;
 const int STATE_FILE = 1;
@@ -15,7 +11,7 @@ const char* const qlic_env_vars[] = {
 	"QLIC_CONFIG_FILE",
 	"QLIC_STATE_FILE",
 };
-const char* const qlic_env_default_vars[] = {
+char* const qlic_env_default_vars[] = {
 	".config/qlic/config.json",
 	".cache/qlic/state.json",
 };

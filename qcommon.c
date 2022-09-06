@@ -4,9 +4,38 @@
 #include <string.h>
 #include <qresponder.h>
 #include <qstr.h>
+#include <jsmn.h>
+
+int enable_debug = 0;
+QlicState qlic_state;
+QlicConfig qlic_config;
+
+char* qlic_chat_id;
 
 void qlic_error(const char* error_message) {
 	fprintf(stderr, "%s\n", error_message);
+}
+
+size_t inform(const char *format, ...) {
+  va_list va;
+  va_start(va, format);
+  size_t ret_val = vfprintf(stdout, format, va);
+  va_end(va);
+  return ret_val;
+}
+
+qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int tokens_size) {
+	for(int i = 0; i < tokens_size; i++) {
+		jsmntok_t* token = tokens + i;
+		if (token->type == JSMN_STRING) {
+			if (strncmp(str + token->start, constant, token->end - token->start) == 0) {
+				i++;
+				jsmntok_t* next_token = tokens + i;
+				return qstrnnew(str + next_token->start, next_token->end - next_token->start);
+			}
+		}
+	}
+	return NULL;
 }
 
 static struct curl_slist* __qlic_set_request_headers(QlicContext* context, qstr access_token) {
@@ -50,7 +79,7 @@ QlicContext* qlic_init() {
 	}
 }
 
-void qlic_request(QlicContext* context, qlic_response_callback callback, bool is_post_request) {
+void qlic_request(QlicContext* context, qlic_response_callback callback, bool is_post_request, qstr payload) {
 	if(context) {
 		CURL* curl = (CURL*)context->context;
 		CURLcode res;
@@ -58,7 +87,7 @@ void qlic_request(QlicContext* context, qlic_response_callback callback, bool is
 		/* curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0); */
 		if (is_post_request) {
 			curl_easy_setopt(curl, CURLOPT_POST, 1);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{\"text\": \"Hi\"}");
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload);
 		}
 		/* curl_easy_setopt(curl, CURLOPT_READFUNCTION, qlic_handle_read_chat); */
 		/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1); */
