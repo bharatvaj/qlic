@@ -3,24 +3,25 @@
 
 #include <stddef.h>
 #include <qstr.h>
+#include <time.h>
 
 typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
 
-// data structure of json
-typedef struct {
-	/* server data */
-	qstr grant_token;
-	qstr access_token;
-	qstr refresh_token;
-	qstr expires_in;
-	/* client data */
-	qstr time_generated;
-} QlicState;
 
-typedef struct {
+// 128 so it aligns properly
+// TODO make the struct packed
+/* attribute(__packed__) */
+typedef struct qlicstate {
+	char grant_token[128];
+	char access_token[128];
+	char refresh_token[128];
+	time_t time_generated;
+} qlicstate_t;
+
+typedef struct qlicconfig {
 	qstr client_id;
 	qstr client_secret;
-} QlicConfig;
+} qlicconfig_t;
 
 
 typedef enum QlicErrorCode {

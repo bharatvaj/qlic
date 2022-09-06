@@ -11,9 +11,9 @@ const char* const qlic_env_vars[] = {
 	"QLIC_CONFIG_FILE",
 	"QLIC_STATE_FILE",
 };
-char* const qlic_env_default_vars[] = {
+const char* qlic_env_default_vars[] = {
 	".config/qlic/config.json",
-	".cache/qlic/state.json",
+	".cache/qlic_state",
 };
 const char* const qlic_file_types[] = {
 	"config",

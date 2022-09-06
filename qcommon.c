@@ -7,8 +7,8 @@
 #include <jsmn.h>
 
 int enable_debug = 0;
-QlicState qlic_state;
-QlicConfig qlic_config;
+qlicstate_t qlic_state;
+qlicconfig_t qlic_config;
 
 char* qlic_chat_id;
 
@@ -54,6 +54,81 @@ static struct curl_slist* __qlic_set_request_headers(QlicContext* context, qstr 
 	list = curl_slist_append(list, "contentType: application/json");
 	return list;
 }
+FILE* get_file(int filetype, const char** qlic_env_vars, const char** qlic_env_default_vars, const char** qlic_file_types, const char** qlic_file_flags) {
+	qstr path_val = qstrnew(getenv(qlic_env_vars[filetype]));
+	if (path_val == NULL) {
+		path_val = qstrnew(qlic_env_default_vars[filetype]);
+		/* TODO check if this is alright */
+		/* append home path */
+		qstr home_path = qstrnew(getenv("HOME"));
+		if (home_path != NULL) {
+			qstrsprintf(&path_val, "%s/%s", home_path, path_val);
+		}
+	}
+	debug("%s file: %s\n", qlic_file_types[filetype], path_val);
+	FILE* fp = fopen(path_val, qlic_file_flags[filetype]);
+	if (fp == NULL) {
+		inform("Not able to open %s\n", path_val);
+		return NULL;
+	}
+	return fp;
+}
+
+
+qstr read_file(FILE *fp) {
+	/**
+	 * Returns a buffer filled with contents from fp
+	 * Works only for files upto 1GB
+	 */
+	const size_t buf_size = 64;
+	qstr buffer = qstrmalloc(buf_size);
+	size_t total_bytes_read = 0;
+	size_t cbr = 0;
+	while ((cbr = fread(buffer + total_bytes_read, 1, buf_size, fp)) > 0) {
+		if (cbr > 0) {
+			total_bytes_read += cbr;
+			size_t newsize = total_bytes_read + buf_size;
+			debug("buffer: %p, newsize: %ld, ", buffer, newsize);
+			buffer = qstrrealloc(buffer, newsize);
+			debug("buffer after qstrrealloc: %p\n", buffer);
+		} else {
+			// cbr is -1 or 0 when error occurs or during eof
+			break;
+		}
+	}
+	/* qstrfree(path_val); */
+	return buffer;
+}
+
+int write_state_file(const qlicstate_t* state) {
+	FILE* fp = fopen("state.bin", "w+");
+	if (fp == NULL) {
+		printf("FATAL: Cannot open file\n");
+	}
+	int bytes_written = fwrite((void*)state, sizeof(qlicstate_t), 1, fp);
+	if (bytes_written == 0) {
+		printf("FATAL: Cannot write to file\n");
+		return -2;
+	}
+
+	/* fprintf(fp, "This is working!\n"); */
+	return fclose(fp);
+}
+
+int read_state_file(qlicstate_t* state) {
+	FILE* fp = fopen("/home/laz3r/.cache/qlic_state", "r+");
+	if (fp == NULL) {
+		printf("FATAL: Cannot open file\n");
+		return -1;
+	}
+	int bytes_read = fread((void*)state, sizeof(qlicstate_t), 1, fp);
+	if (bytes_read == 0) {
+		printf("FATAL: Cannot read from file\n");
+		return -2;
+	}
+	fclose(fp);
+	return 0;
+}
 
 QlicContext* qlic_context_access_init(qstr access_token) {
 	QlicContext* qlic_context = qlic_init();
@@ -80,6 +155,7 @@ QlicContext* qlic_init() {
 }
 
 void qlic_request(QlicContext* context, qlic_response_callback callback, bool is_post_request, qstr payload) {
+	fprintf(stdout, "%s\n", payload);
 	if(context) {
 		CURL* curl = (CURL*)context->context;
 		CURLcode res;

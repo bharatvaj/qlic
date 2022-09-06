@@ -26,8 +26,8 @@ qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int token
 extern int enable_debug;
 
 /* Mutable global values */
-extern QlicState qlic_state;
-extern QlicConfig qlic_config;
+extern qlicstate_t qlic_state;
+extern qlicconfig_t qlic_config;
 
 extern char* qlic_chat_id;
 
@@ -43,9 +43,14 @@ if (enable_debug) { \
   fprintf(stderr, __VA_ARGS__); \
 }
 
+int write_state_file(const qlicstate_t* state);
+
+int read_state_file(qlicstate_t* state);
 
 size_t inform(const char *format, ...);
 
+FILE* get_file(int filetype, const char** qlic_env_vars, const char** qlic_env_default_vars, const char** qlic_file_types, const char** qlic_file_flags);
+qstr read_file(FILE *fp);
 void qlic_error(const char* error_message);
 
 QlicContext* qlic_context_access_init(qstr access_token);
