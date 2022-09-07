@@ -11,7 +11,7 @@ FILES
 -----
 * qlic.c - Controller for qlic, handles argument parsing and delegates control to others parts of the code
 
-* qtypes.h - Contains the basic types required for cliq. (struct QlicContext, etc)
+* qtypes.h - Contains the basic types required for cliq. (struct qliccontext_t, etc)
 * qcommon.h - Contains utils and other common function for qlic
 * qresponder.h - Handles the responses and delegate the control based on the response
 

@@ -7,7 +7,6 @@
 
 typedef size_t (*qlic_response_callback)(char*, size_t, size_t, void*);
 
-
 // 128 so it aligns properly
 // TODO make the struct packed
 /* attribute(__packed__) */
@@ -38,10 +37,10 @@ struct QlicCliqAction {
 /**
  * Holds network information for the current request
  */
-typedef struct QlicContext {
+typedef struct qliccontext {
 	/* cURL ctx  */
 	void* context;
 	qstr request_url;
-} QlicContext;
+} qliccontext_t;
 
 #endif

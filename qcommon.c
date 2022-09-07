@@ -10,7 +10,8 @@ int enable_debug = 0;
 qlicstate_t qlic_state;
 qlicconfig_t qlic_config;
 
-char* qlic_chat_id;
+char** chat_ids = NULL;
+size_t chat_ids_len = 0;
 
 void qlic_error(const char* error_message) {
 	fprintf(stderr, "%s\n", error_message);
@@ -38,7 +39,7 @@ qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int token
 	return NULL;
 }
 
-static struct curl_slist* __qlic_set_request_headers(QlicContext* context, qstr access_token) {
+static struct curl_slist* __qlic_set_request_headers(qliccontext_t* context, qstr access_token) {
 	__attribute__((unused)) CURL* curl = (CURL*)context->context;
 	if(access_token == NULL) {
 		return NULL;
@@ -130,8 +131,8 @@ int read_state_file(qlicstate_t* state) {
 	return 0;
 }
 
-QlicContext* qlic_context_access_init(qstr access_token) {
-	QlicContext* qlic_context = qlic_init();
+qliccontext_t* qlic_context_access_init(qstr access_token) {
+	qliccontext_t* qlic_context = qlic_init();
 	if (qlic_context) {
 		CURL* curl = (CURL*)qlic_context->context;
 		struct curl_slist* list = __qlic_set_request_headers(qlic_context, access_token);
@@ -143,10 +144,10 @@ QlicContext* qlic_context_access_init(qstr access_token) {
 }
 
 
-QlicContext* qlic_init() {
+qliccontext_t* qlic_init() {
 	CURL *curl = curl_easy_init();
 	if (curl) {
-		QlicContext* qlic_context = (QlicContext*)calloc(1, sizeof(QlicContext));
+		qliccontext_t* qlic_context = (qliccontext_t*)calloc(1, sizeof(qliccontext_t));
 		qlic_context->context = curl;
 		return qlic_context;
 	} else {
@@ -154,7 +155,7 @@ QlicContext* qlic_init() {
 	}
 }
 
-void qlic_request(QlicContext* context, qlic_response_callback callback, bool is_post_request, qstr payload) {
+void qlic_request(qliccontext_t* context, qlic_response_callback callback, bool is_post_request, qstr payload) {
 	fprintf(stdout, "%s\n", payload);
 	if(context) {
 		CURL* curl = (CURL*)context->context;
@@ -174,7 +175,8 @@ void qlic_request(QlicContext* context, qlic_response_callback callback, bool is
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 								  curl_easy_strerror(res));
 		}
-		curl_easy_cleanup(curl);
+		// TODO handle cleanup elsewhere or allocate curl object in heap
+		/* curl_easy_cleanup(curl); */
 	}
 }
 

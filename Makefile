@@ -16,7 +16,7 @@ config.h: config.def.h
 	cp config.def.h config.h
 
 test: qlic
-	./qlic -d -c CT_2243173252451333824_64396901-B1 -s Hello
+	./qlic -d -s Hello CT_2243173252451333824_64396901-B1 CT_2243173252451333824_64396901-B1
 
 clean:
 	rm -fv qlic config.h *.o

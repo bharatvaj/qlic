@@ -7,19 +7,11 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+// forward declaration
 typedef struct jsmntok jsmntok_t;
 
-#define QLIC_FILE_BUFFER_SIZE 256
 /// @todo this can be optimized based on the cpu
-
-/* #define LOAD_INTO_STRUCT(STRUCT, FIELD, JSON) \ */
-/* 		const nx_json* __LINE__##FIELD = nx_json_get(JSON, #FIELD); \ */
-/* 		if (__LINE__##FIELD->type == NX_JSON_STRING) { \ */
-/* 			STRUCT.FIELD = qstrnew(__LINE__##FIELD->text_value); \ */
-/* 		} else { \ */
-/* 			inform("refresh not able to obtain\n"); \ */
-/* 		} */
-/*  */
+#define QLIC_FILE_BUFFER_SIZE 256
 
 qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int tokens_size);
 
@@ -29,7 +21,8 @@ extern int enable_debug;
 extern qlicstate_t qlic_state;
 extern qlicconfig_t qlic_config;
 
-extern char* qlic_chat_id;
+extern char** chat_ids;
+extern size_t chat_ids_len;
 
 #define QLIC_PANIC() \
 	fprintf(stderr, "qlick panicked at %s:%d", __FILE__, __LINE__); \
@@ -53,10 +46,10 @@ FILE* get_file(int filetype, const char** qlic_env_vars, const char** qlic_env_d
 qstr read_file(FILE *fp);
 void qlic_error(const char* error_message);
 
-QlicContext* qlic_context_access_init(qstr access_token);
+qliccontext_t* qlic_context_access_init(qstr access_token);
 
-QlicContext* qlic_init();
+qliccontext_t* qlic_init();
 
-void qlic_request(QlicContext* context, qlic_response_callback callback, bool is_post_request, qstr payload);
+void qlic_request(qliccontext_t* context, qlic_response_callback callback, bool is_post_request, qstr payload);
 
 #endif

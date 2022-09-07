@@ -11,14 +11,12 @@
 
 #include "config.h"
 
-jsmn_parser state_json;
 jsmn_parser config_json;
 
 qstr config_jstr = NULL;
-qstr state_jstr = NULL;
 
 static int qlic_usage() {
-	fputs("usage: qlic [-va] [-s msg <chat_id> [chat_id...]] [-r <chat_id> [chat_id..]]\n", stderr);
+	fputs("usage: qlic [-va] [-s msg |-r <chat_id> [chat_id..]]\n", stderr);
 	return -1;
 }
 
@@ -28,19 +26,22 @@ int qlic_recv_msg(const qstr access_token) {
 }
 
 int qlic_send_text_msg(const qstr access_token, const qstr msg) {
-	QlicContext *qlic_context = qlic_context_access_init(access_token);
+	qliccontext_t *qlic_context = qlic_context_access_init(access_token);
 	if (qlic_context == NULL) {
 		qlic_error("Cannot init network library");
 		return -1;
 	}
-	qlic_context->request_url = qlic_send_message_str(qlic_chat_id);
 	qstr payload = NULL;
 	qstrsprintf(&payload, "{\"text\": \"%s\"}", msg);
 	inform("Sending message: %s\n", msg);
-	qlic_request(qlic_context, qlic_handle_send_message, true, payload);
+	for (int i = 0; i < chat_ids_len; i++) {
+		char* qlic_chat_id = chat_ids[i];
+		qlic_context->request_url = qlic_send_message_str(qlic_chat_id);
+		qlic_request(qlic_context, qlic_handle_send_message, true, payload);
+	}
+	qstrfree(payload);
 	return 0;
 }
-
 
 void load_state() {
 		if (read_state_file(&qlic_state) < 0) {
@@ -59,35 +60,35 @@ static void load_config(jsmntok_t* token, int size) {
 
 int main(int argc, char *argv[])
 {
-	jsmntok_t config_tokens[40];
-	jsmntok_t state_tokens[40];
-	jsmn_init(&config_json);
-	jsmn_init(&state_json);
 	if (argc == 1) {
 		return qlic_usage();
 	}
-	int i = 1;
-	if (!strcmp(argv[i], "-d")) {
-		i++;
-		enable_debug = 1;
-	}
 
-	/* state_jstr = get_file(STATE_FILE); */
+	int i = 0;
+	int recv_requested = 0;
+	int send_requested = 0;
+	int auth_requested = 0;
+	char* send_param = NULL;
+
+	jsmntok_t config_tokens[40];
+	jsmn_init(&config_json);
+
+	/* Parse config.json */
 	FILE* config_fp = get_file(CONFIG_FILE, qlic_env_vars, qlic_env_default_vars, qlic_file_types, qlic_file_flags);
 	config_jstr  = read_file(config_fp);
 	fclose(config_fp);
 	int config_tok_count = jsmn_parse(&config_json, config_jstr, qstrlen(config_jstr), config_tokens, 40);
-	/* int state_tok_count = jsmn_parse(&state_json, state_jstr, qstrlen(state_jstr), state_tokens, 40); */
-
-	int errstatus = read_state_file(&qlic_state);
-
-	/* QlicContext *ctx = qlic_init(); */
-	if (errstatus < 0) {
-		inform("Cannot parse state.json\n");
-		return errstatus;
-	}
-	if (config_tok_count < 0) {
+	/* Validate json */
+	if (config_tok_count < 2) {
 		// TODO if config is found load the global states from the json
+		inform("config.json is invalid\n");
+	}
+
+	/* Parse .cache/qlic_state */
+	int state_status = read_state_file(&qlic_state);
+
+	if (state_status < 0) {
+		inform("Cannot read file: %s. Run `qlic -a` first.\n", "$HOME/.cache/qlic_state");
 	}
 
 	load_state();
@@ -97,44 +98,56 @@ int main(int argc, char *argv[])
 		inform("Access token not found, try auth again\n");
 		exit(-1);
 	}
-	// TODO Use an argument parsing library or not, make a decision!
-	/* debug("Value of i is: %d\n", i); */
-	/* debug("Value of argv[i] is: %s\n", argv[i]); */
-	for (; i < argc && argv[i][0] == '-'; i++) {
-		for (int j = 1; argv[i][j] != '\0'; j++) {
-			debug("argv[%d][%d]: %c\n", i, j, argv[i][j]);
-			int f = argv[i][j];
-			if (f == 'v') {
-				fputs("qlic v" QLIC_VERSION "\n", stderr);
-			} else if (f == 'd') {
-				enable_debug = 1;
-			} else if (f == 'c') {
-				if (i + 1 < argc) {
-					qlic_chat_id = argv[++i];
-					break;
-				}
-			} else if (f == 'r') {
-				qlic_recv_msg(qlic_state.access_token);
-			} else if (f == 's') {
-				if (i + 1 < argc) {
-					qlic_send_text_msg(qlic_state.access_token, argv[++i]);
-					break;
-				} else {
-					return qlic_usage();
-				}
-			} else if (f == 'a') {
-				char *access_token = start_oauth_server(&qlic_config);
-				if (access_token == NULL) {
-					qlic_error("Access token is empty, authentication failed");
-					return -1;
-				} else {
-					// TOOD write data to state.json
-				}
+
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-a")) {
+			auth_requested = 1;
+			break;
+		} else if (!strcmp(argv[i], "-v")) {
+			fputs("qlic v" QLIC_VERSION "\n", stderr);
+			return 0;
+		} else if (!strcmp(argv[i], "-d")) {
+			enable_debug = 1;
+		} else if (!strcmp(argv[i], "-r")) {
+			recv_requested = 1;
+			break;
+		} else if (!strcmp(argv[i], "-s")) {
+			if (i + 1 < argc) {
+				send_requested = 1;
+				send_param = argv[++i];
+				break;
 			} else {
-				inform("'%c' is not valid flag\n", argv[i][j]);
 				return qlic_usage();
 			}
 		}
 	}
-	return 0;
+
+	if (i == argc) {
+		return qlic_usage();
+	}
+	chat_ids = &argv[i];
+	chat_ids_len = (argc - i) - 1;
+
+	int errstatus = 0;
+
+	if (auth_requested) {
+		char *access_token = start_oauth_server(&qlic_config);
+		if (access_token == NULL) {
+			qlic_error("Access token is empty, authentication failed");
+				errstatus = -1;
+		} else {
+			int status_status = write_state_file(&qlic_state);
+			if (status_status < 0) {
+				inform("FATAL: Creation of state file failed\n");
+				errstatus = -1;
+			}
+		}
+	} else if (send_requested) {
+		errstatus = qlic_send_text_msg(qlic_state.access_token, send_param);
+	} else if (recv_requested) {
+		errstatus = qlic_recv_msg(qlic_state.access_token);
+	} else {
+		errstatus = qlic_usage();
+	}
+	return errstatus;
 }
