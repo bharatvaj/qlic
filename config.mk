@@ -7,12 +7,15 @@ PREFIX=/usr/local
 MANPREFIX = $(PREFIX)/$(DESTDIR)/share/man
 DESTDIR=
 
-CFLAGS=-std=c99 -pedantic -Werror -Wall -Wextra -Os -I.
 
 # Unix like
 INSTALL=install -m766
 RM=rm -rf
 MKDIR=mkdir -p
+OUT=-o
+CFLAGS=-std=c99 -pedantic -Werror -Wall -Wextra -Os -I.
 
 # Windows
-#INSTALL=cp
+INSTALL=cp
+OUT=/out:
+CFLAGS+=-D_CRT_SECURE_NO_WARNINGS

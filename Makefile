@@ -1,6 +1,6 @@
 include config.mk
 
-all: libqstr.a
+all: options libqstr.a
 
 options:
 	@echo libqstr build options:
@@ -8,8 +8,11 @@ options:
 	@echo "LDFLAGS  = ${LDFLAGS}"
 	@echo "CC       = ${CC}"
 
-test: test.c libqstr.a
-	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
+test.obj: test.c libqstr.a
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< -c
+
+test.exe: test.obj
+	$(CC) -o $@ $< /link libqstr.a
 
 qstr.c.o: qstr.c qstr.h
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $< -c
@@ -18,7 +21,7 @@ libqstr.a: qstr.c.o
 	$(AR) cr $@ $<
 
 clean:
-	$(RM) libqstr.a qstr.c.o test libqstr-${VERSION}.tar.gz
+	$(RM) libqstr.a *.obj *.o test libqstr-${VERSION}.tar.gz ut
 
 dist: clean
 	$(MKDIR) libqstr-${VERSION}
@@ -35,3 +38,5 @@ install: libqstr.a
 uninstall:
 	$(RM) $(PREFIX)/$(DESTDIR)/lib/libqstr.a
 	$(RM) $(PREFIX)/$(DESTDIR)/include/qstr.h
+
+.PHONY: all options

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+/* #include <unistd.h> */
 #include <string.h>
 #include <stdarg.h>
 
@@ -25,8 +25,8 @@ int sprintf_test() {
 	int m = qstrsprintf(&newstr, "This library is %s", "awesome");
 	debug("Expected: %s\n", QSTR_SAMPLE_STR);
 	debug("Actual: %s\n", newstr);
-	debug("Expected Size: %ld\n", n);
-	debug("Actual Size: %ld\n", qstrlen(newstr));
+	debug("Expected Size: %zu\n", n);
+	debug("Actual Size: %zu\n", qstrlen(newstr));
 	debug("Return value: %d\n", m);
 	return (n == qstrlen(newstr));
 }
@@ -38,8 +38,8 @@ int sprintf_self_test() {
 	int m = qstrsprintf(&newstr, "GNU is not UNIX but %s", newstr);
 	debug("Expected: %s\n", QSTR_SELF_SAMPLE_STR);
 	debug("Actual: %s\n", newstr);
-	debug("Expected Size: %ld\n", n);
-	debug("Actual Size: %ld\n", qstrlen(newstr));
+	debug("Expected Size: %zu\n", n);
+	debug("Actual Size: %zu\n", qstrlen(newstr));
 	debug("Return value: %d\n", m);
 	return (n == qstrlen(newstr));
 }
@@ -47,7 +47,7 @@ int sprintf_self_test() {
 qstr grow_buffer_example() {
 	const size_t buf_size = 64;
 	FILE* fp = fopen("test.c", "r");
-	debug("buf_size: %ld\n", buf_size);
+	debug("buf_size: %zu\n", buf_size);
 	qstr buffer = qstrmalloc(buf_size);
 	size_t total_bytes_read = 0;
 	size_t cbr = 0;
@@ -55,9 +55,9 @@ qstr grow_buffer_example() {
 		if (cbr > 0) {
 			total_bytes_read += cbr;
 			size_t newsize = total_bytes_read + buf_size;
-			debug("buffer: %p, newsize: %ld, ", buffer, newsize);
+			debug("buffer: %s, newsize: %zu, ", buffer, newsize);
 			buffer = qstrrealloc(buffer, newsize);
-			debug("buffer after qstrrealloc: %p\n", buffer);
+			debug("buffer after qstrrealloc: %s\n", buffer);
 		} else {
 			// cbr is -1 or 0 when error occurs or during eof
 			break;
@@ -82,7 +82,7 @@ int find_test(int forward) {
 		debug("Search failed\n");
 		return -1;
 	}
-	debug("Value: %s, Index: %ld\n", ptr, index);
+	debug("Value: %s, Index: %zu\n", ptr, index);
 	return index;
 }
 
@@ -95,10 +95,10 @@ int strlen_test() {
 	size_t constant_len = strlen(QSTR_TEST_STRING);
 	size_t sstr_len = qstrlen(sstr);
 	size_t copy_len = strlen(copystr);
-	debug("strlen(char*): %ld\n", teststr_len);
-	debug("strlen(CONSTANT): %ld\n", constant_len);
-	debug("qstrlen(qstrdup(sstr)): %ld\n", sstr_len);
-	debug("strlen(qstrdup(sstr)): %ld\n", copy_len);
+	debug("strlen(char*): %zu\n", teststr_len);
+	debug("strlen(CONSTANT): %zu\n", constant_len);
+	debug("qstrlen(qstrdup(sstr)): %zu\n", sstr_len);
+	debug("strlen(qstrdup(sstr)): %zu\n", copy_len);
 	return (teststr_len == constant_len) == (sstr_len == copy_len);
 }
 
