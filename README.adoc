@@ -52,3 +52,7 @@ Create a config file at $XDG_DATA_HOME/qlic/data.json with the following configu
 	}
 
 NOTE: client id and secret can be obtained from https://api-console.zoho.com/
+
+
+== qlic on windows
+Due to curl not compiling with MSVC. qlic will be a mingw app as curl is available as mingw. Make sure to compile qlic statically as the users might need to run it without any additional runtime.

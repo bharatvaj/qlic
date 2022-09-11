@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <qlic_common.h>
 #include <cliq_apis.h>
 #include <qlic_response_handler.h>
