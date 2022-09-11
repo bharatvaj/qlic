@@ -1,9 +1,7 @@
-SRC = qlic.c qlic_response_handler.c qlic_common.c cliq_apis.c
-HDR = qlic_oauth.h
-
 include config.mk
 
-$(OBJ): $(SRC)
+SRC = qresponder.c qcommon.c qoauth.c capis.c
+HDR = ${SRC:.c=.h}
 
 all: options $(TARGET)
 
@@ -13,19 +11,23 @@ options:
 	@echo "LDFLAGS  = $(LDFLAGS)"
 	@echo "CC       = $(CC)"
 
-ifneq (CC,cl)
-TARGET=qlic.exe
-else
-TARGET=qlic
-endif
 
 $(TARGET): $(OBJ)
 
-.PHONY: all options
+%.o: %.c %.h
+	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) -c $<
 
-all: qlic
+qlic: config.h $(OBJ) qlic.c
+	$(CC) -o $@ $(CFLAGS)  qlic.c $(OBJ) $(LDFLAGS)
+
+config.h: config.def.h
+	cp config.def.h config.h
 
 test: qlic
-	./qlic -r
+	./qlic -d -s Hello CT_2243173252451333824_64396901-B1 CT_2243173252451333824_64396901-B1
+
 clean:
-	rm qlic
+	rm -fv qlic config.h *.o
+
+.PHONY: all options
+
