@@ -7,10 +7,10 @@ DESTDIR=${HOME}/sysroot
 ifeq (CC,cl)
 SHELL=cmd
 CFLAGS=/I. /I$(DESTDIR)/include
-LDFLAGS=/link /LIBPATH:$(DESTDIR)/lib nxjson.lib oauth.lib curl.lib
+LDFLAGS=/link /LIBPATH:$(DESTDIR)/lib oauth.lib curl.lib
 else
-CFLAGS=-I. -I$(DESTDIR)/include -g -Wall -Wextra -DQLIC_VERSION=\"${VERSION}\" -DJSMN_STATIC
-LDFLAGS=-L$(DESTDIR)/lib -loauth -lqstr -lcurl
+CFLAGS=-I. -I$(DESTDIR)/include -Iout/include -g -Wall -Wextra -DQLIC_VERSION=\"${VERSION}\" -DJSMN_STATIC
+LDFLAGS=-Loauth2/ -loauth2 -Lqstr/ -lqstr -L$(DESTDIR) -lcurl
 endif
 
 ifeq (CC,cl)

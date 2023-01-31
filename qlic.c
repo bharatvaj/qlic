@@ -1,7 +1,11 @@
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#include <unistd.h>
 
 #include <capis.h>
 #include <qcommon.h>
@@ -12,9 +16,23 @@
 
 #include <jsmn.h>
 
+int recv_requested = 0;
+int send_requested = 0;
+int auth_requested = 0;
+
 jsmn_parser config_json;
 
 qstr config_jstr = NULL;
+
+int sig_rcvd = 0;
+
+void qlic_sig_hdlr(int sig) {
+	if (recv_requested) {
+		sig_rcvd = 1;
+	} else {
+		exit(sig);
+	}
+}
 
 static int qlic_usage() {
 	fputs("usage: qlic [-va] [-s msg |-r <chat_id> [chat_id..]]\n", stderr);
@@ -22,7 +40,11 @@ static int qlic_usage() {
 }
 
 int qlic_recv_msg(const qstr access_token) {
-	inform("%s will be used to retreive msg\n", access_token);
+	while(!sig_rcvd) {
+		// TODO use 100ns instead of 1000ns
+		sleep(1);
+		inform("%s will be used to retreive msg\n", access_token);
+	}
 	return -1;
 }
 
@@ -66,9 +88,6 @@ int main(int argc, char *argv[])
 	}
 
 	int i = 0;
-	int recv_requested = 0;
-	int send_requested = 0;
-	int auth_requested = 0;
 	char* send_param = NULL;
 
 	jsmntok_t config_tokens[40];
@@ -99,6 +118,8 @@ int main(int argc, char *argv[])
 		inform("Access token not found, try auth again\n");
 		exit(-1);
 	}
+
+	signal(SIGINT, qlic_sig_hdlr);
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp(argv[i], "-a")) {

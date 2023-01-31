@@ -5,3 +5,5 @@ config-with-value.h
 *.o
 state.json
 qlic.dSYM/
+qstr/
+oauth2
