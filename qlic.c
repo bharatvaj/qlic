@@ -66,14 +66,6 @@ int qlic_send_text_msg(const qstr access_token, const qstr msg) {
 	return 0;
 }
 
-void load_state() {
-		if (read_state_file(&qlic_state) < 0) {
-			return;
-		}
-		debug("qlic_state: access_token: %s\n", qlic_state.access_token);
-		debug("qlic_state: grant_token: %s\n", qlic_state.grant_token);
-}
-
 static void load_config(jsmntok_t* token, int size) {
 		qlic_config.client_id = get_val(config_jstr, "client_id", token, size);
 		qlic_config.client_secret = get_val(config_jstr, "client_secret", token, size);
@@ -81,8 +73,7 @@ static void load_config(jsmntok_t* token, int size) {
 		debug("config.json: client_secret: %s\n", qlic_config.client_secret);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		return qlic_usage();
 	}
@@ -93,25 +84,48 @@ int main(int argc, char *argv[])
 	jsmntok_t config_tokens[40];
 	jsmn_init(&config_json);
 
+	qstr home_path = qstrnew(getenv("HOME"));
+	char* config_path = qstrnew(qlic_env_default_vars[0]);
+
 	/* Parse config.json */
-	FILE* config_fp = get_file(CONFIG_FILE, qlic_env_vars, qlic_env_default_vars, qlic_file_types, qlic_file_flags);
+	if (home_path != NULL) {
+		qstrsprintf(&config_path, "%s/%s", home_path, config_path);
+	}
+	FILE* config_fp = fopen(config_path, qlic_file_flags[0]);
+	if (config_fp == NULL) {
+		inform("Not able to open %s\n", config_path);
+		return -1;
+	}
 	config_jstr  = read_file(config_fp);
 	fclose(config_fp);
 	int config_tok_count = jsmn_parse(&config_json, config_jstr, qstrlen(config_jstr), config_tokens, 40);
 	/* Validate json */
 	if (config_tok_count < 2) {
-		// TODO if config is found load the global states from the json
 		inform("config.json is invalid\n");
 	}
 
 	/* Parse .cache/qlic_state */
-	int state_status = read_state_file(&qlic_state);
-
-	if (state_status < 0) {
-		inform("Cannot read file: %s. Run `qlic -a` first.\n", "$HOME/.cache/qlic_state");
+	// TODO Append HOME path before opening
+	char* state_path = qstrnew(qlic_env_default_vars[1]);
+	if (home_path != NULL) {
+		qstrsprintf(&state_path, "%s/%s", home_path, state_path);
 	}
+	FILE* state_fp = fopen(state_path, "r+");
+	if (state_fp == NULL) {
+		printf("FATAL: Cannot open file\n");
+		return -1;
+	}
+	int bytes_read = fread((void*)&qlic_state, sizeof(qlicstate_t), 1, state_fp);
+	if (bytes_read == 0) {
+		inform("Cannot read file: %s. Run `qlic -a` first.\n", "$HOME/.cache/qlic_state");
+		// TODO use documented status codes
+		return -2;
+	}
+	fclose(state_fp);
 
-	load_state();
+	debug("qlic_state: access_token: %s\n", qlic_state.access_token);
+	debug("qlic_state: grant_token: %s\n", qlic_state.grant_token);
+
 	load_config(config_tokens, config_tok_count);
 	debug("access_token: %s\n", qlic_state.access_token);
 	if (strcmp(qlic_state.access_token, "") == 0) {

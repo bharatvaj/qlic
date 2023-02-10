@@ -55,26 +55,6 @@ static struct curl_slist* __qlic_set_request_headers(qliccontext_t* context, qst
 	list = curl_slist_append(list, "contentType: application/json");
 	return list;
 }
-FILE* get_file(int filetype, const char** qlic_env_vars, const char** qlic_env_default_vars, const char** qlic_file_types, const char** qlic_file_flags) {
-	qstr path_val = qstrnew(getenv(qlic_env_vars[filetype]));
-	if (path_val == NULL) {
-		path_val = qstrnew(qlic_env_default_vars[filetype]);
-		/* TODO check if this is alright */
-		/* append home path */
-		qstr home_path = qstrnew(getenv("HOME"));
-		if (home_path != NULL) {
-			qstrsprintf(&path_val, "%s/%s", home_path, path_val);
-		}
-	}
-	debug("%s file: %s\n", qlic_file_types[filetype], path_val);
-	FILE* fp = fopen(path_val, qlic_file_flags[filetype]);
-	if (fp == NULL) {
-		inform("Not able to open %s\n", path_val);
-		return NULL;
-	}
-	return fp;
-}
-
 
 qstr read_file(FILE *fp) {
 	/**
@@ -114,21 +94,6 @@ int write_state_file(const qlicstate_t* state) {
 
 	/* fprintf(fp, "This is working!\n"); */
 	return fclose(fp);
-}
-
-int read_state_file(qlicstate_t* state) {
-	FILE* fp = fopen("/home/laz3r/.cache/qlic_state", "r+");
-	if (fp == NULL) {
-		printf("FATAL: Cannot open file\n");
-		return -1;
-	}
-	int bytes_read = fread((void*)state, sizeof(qlicstate_t), 1, fp);
-	if (bytes_read == 0) {
-		printf("FATAL: Cannot read from file\n");
-		return -2;
-	}
-	fclose(fp);
-	return 0;
 }
 
 qliccontext_t* qlic_context_access_init(qstr access_token) {
