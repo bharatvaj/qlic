@@ -6,6 +6,7 @@
 /* Constants */
 const int CONFIG_FILE = 0;
 const int STATE_FILE = 1;
+const int QLIC_FP_READ_SIZE = 256;
 
 const char* const qlic_env_vars[] = {
 	"QLIC_CONFIG_FILE",

@@ -13,7 +13,7 @@ typedef struct jsmntok jsmntok_t;
 /// @todo this can be optimized based on the cpu
 #define QLIC_FILE_BUFFER_SIZE 256
 
-qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int tokens_size);
+qstr json_get_val(const char* str, const char* constant, jsmntok_t* tokens, int tokens_size);
 
 extern int enable_debug;
 

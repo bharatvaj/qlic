@@ -8,17 +8,19 @@
 #include <capis.h>
 #include <jsmn.h>
 
+#include <oauth2.h>
+
 // TODO Have to free the returning string at the end, who does that?
 char *json_access_code_transformer(char* str) {
 	jsmn_parser oauth_parser;
 	struct jsmntok oauth_tokens[10];
 	int oauth_tok_count = jsmn_parse(&oauth_parser, str, strlen(str), oauth_tokens, 10);
-	qstr atoken = get_val(str, "access_token", oauth_tokens, oauth_tok_count);
-	qstr rtoken = get_val(str, "refresh_token", oauth_tokens, oauth_tok_count);
+	qstr atoken = json_get_val(str, "access_token", oauth_tokens, oauth_tok_count);
+	qstr rtoken = json_get_val(str, "refresh_token", oauth_tokens, oauth_tok_count);
 	memcpy(qlic_state.access_token, atoken, qstrlen(atoken));
 	memcpy(qlic_state.refresh_token, atoken, qstrlen(rtoken));
 	// TODO convert to UNIX timestamp SAFELY
-	/* qlic_state.expires_in = get_val(str, "expires_in", oauth_tokens, oauth_tok_count); */
+	/* qlic_state.expires_in = json_get_val(str, "expires_in", oauth_tokens, oauth_tok_count); */
 	return NULL;
 }
 

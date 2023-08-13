@@ -9,7 +9,7 @@ SHELL=cmd
 CFLAGS=/I. /I$(DESTDIR)/include
 LDFLAGS=/link /LIBPATH:$(DESTDIR)/lib oauth.lib curl.lib
 else
-CFLAGS=-I. -I$(DESTDIR)/include -Iout/include -g -Wall -Wextra -DQLIC_VERSION=\"${VERSION}\" -DJSMN_STATIC
+CFLAGS=-I. -I$(DESTDIR)/include -Iout/include -g2 -Wall -Wextra -DQLIC_VERSION=\"${VERSION}\" -DJSMN_STATIC
 LDFLAGS=-Loauth2/ -loauth2 -Lqstr/ -lqstr -L$(DESTDIR) -lcurl
 endif
 

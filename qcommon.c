@@ -25,14 +25,14 @@ size_t inform(const char *format, ...) {
   return ret_val;
 }
 
-qstr get_val(const char* str, const char* constant, jsmntok_t* tokens, int tokens_size) {
+qstr json_get_val(const char* str, const char* field, jsmntok_t* tokens, int tokens_size) {
 	for(int i = 0; i < tokens_size; i++) {
 		jsmntok_t* token = tokens + i;
 		if (token->type == JSMN_STRING) {
-			if (strncmp(str + token->start, constant, token->end - token->start) == 0) {
+			if (strncmp(str + token->start, field, token->end - token->start) == 0) {
 				i++;
-				jsmntok_t* next_token = tokens + i;
-				return qstrnnew(str + next_token->start, next_token->end - next_token->start);
+				token = tokens + i;
+				return qstrnnew(str + token->start, token->end - token->start);
 			}
 		}
 	}
@@ -54,31 +54,6 @@ static struct curl_slist* __qlic_set_request_headers(qliccontext_t* context, qst
 	list = curl_slist_append(list, "Content-Type: application/json");
 	list = curl_slist_append(list, "contentType: application/json");
 	return list;
-}
-
-qstr read_file(FILE *fp) {
-	/**
-	 * Returns a buffer filled with contents from fp
-	 * Works only for files upto 1GB
-	 */
-	const size_t buf_size = 64;
-	qstr buffer = qstrmalloc(buf_size);
-	size_t total_bytes_read = 0;
-	size_t cbr = 0;
-	while ((cbr = fread(buffer + total_bytes_read, 1, buf_size, fp)) > 0) {
-		if (cbr > 0) {
-			total_bytes_read += cbr;
-			size_t newsize = total_bytes_read + buf_size;
-			debug("buffer: %p, newsize: %ld, ", buffer, newsize);
-			buffer = qstrrealloc(buffer, newsize);
-			debug("buffer after qstrrealloc: %p\n", buffer);
-		} else {
-			// cbr is -1 or 0 when error occurs or during eof
-			break;
-		}
-	}
-	/* qstrfree(path_val); */
-	return buffer;
 }
 
 int write_state_file(const qlicstate_t* state) {
