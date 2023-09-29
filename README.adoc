@@ -2,9 +2,15 @@
 
 qlic is an unecessarily fast cli frontend to the venereal Zoho cliq. It is cliq but unopinionated.
 
+NOTE: This project follows 'README driven development', so some of what is said in 'What Works' section actually doesn't work. I will add a CHANGELOG in the future with proper versioning.
+
 === Why?
 
-I avoid browsers like the plague, [more info](https://getsh.org/bharatvaj/braindump/browsers.html). Zoho cliq was my only reason for using a browser. Not anymore.
+I would rather use the comfy terminal than a web browser for my computing needs. Zoho cliq was my only reason for opening a tab in browser. Not anymore.
+
+=== TODO
+
+- Make qlic interactive/usable by making it filesystem based like [ii](https://git.suckless.org/ii/file/README.html).
 
 === Usage
 ==== Setup
