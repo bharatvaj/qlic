@@ -10,7 +10,7 @@ I would rather use the comfy terminal than a web browser for my computing needs.
 
 === TODO
 
-- Make qlic interactive/usable by making it filesystem based like [ii](https://git.suckless.org/ii/file/README.html).
+- Make qlic interactive/usable by making it filesystem based like https://git.suckless.org/ii/file/README.html?q=label:%22ii%22.
 
 === Usage
 ==== Setup
